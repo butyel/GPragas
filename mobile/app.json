@@ -1,0 +1,66 @@
+{
+  "expo": {
+    "name": "GPRAGAS",
+    "slug": "gpragas-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "gpragas",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F766E"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.gpragas.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "GPRAGAS precisa de acesso à câmera para tirar fotos antes e depois do serviço.",
+        "NSLocationWhenInUseUsageDescription": "GPRAGAS precisa da sua localização para registrar presença no local do serviço.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "GPRAGAS precisa da sua localização para registrar presença no local do serviço.",
+        "NSFaceIDUsageDescription": "Use Face ID para fazer login no aplicativo."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0F766E"
+      },
+      "package": "com.gpragas.app",
+      "permissions": [
+        "CAMERA",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow GPRAGAS to use your location to verify service presence."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow GPRAGAS to access your photos to attach images to work orders.",
+          "cameraPermission": "Allow GPRAGAS to access your camera to take photos of services."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

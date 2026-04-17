@@ -1,0 +1,7 @@
+{
+  "name": "gpragas-monorepo",
+  "scripts": {
+    "build:web": "cd web && npm run build",
+    "deploy": "cd web && npm run build && cd .. && firebase deploy"
+  }
+}
