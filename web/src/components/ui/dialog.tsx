@@ -15,7 +15,7 @@ const Dialog = ({ open, onOpenChange, children }: DialogProps) => {
       {open && (
         <div className="fixed inset-0 z-50 bg-black/80" onClick={() => onOpenChange?.(false)} />
       )}
-      {children}
+      {open && children}
     </>
   )
 }

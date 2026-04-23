@@ -58,6 +58,17 @@ export default function FinancialPage() {
   const [status, setStatus] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedTransaction, setSelectedTransaction] = useState<any | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [transactionType, setTransactionType] = useState<"income" | "expense">("income")
+  const [formData, setFormData] = useState({
+    description: "",
+    client_name: "",
+    value: 0,
+    due_date: "",
+    status: "pending",
+    payment_method: "pix",
+  })
 
   useEffect(() => {
     async function loadInvoices() {
@@ -98,6 +109,61 @@ export default function FinancialPage() {
     .filter((t) => t.type === "income" && t.status === "pending")
     .reduce((acc, t) => acc + (t.value || 0), 0)
 
+  const handleCreateTransaction = (type: "income" | "expense") => {
+    setTransactionType(type)
+    setFormData({
+      description: "",
+      client_name: "",
+      value: 0,
+      due_date: "",
+      status: type === "income" ? "pending" : "paid",
+      payment_method: "pix",
+    })
+    setIsEditing(false)
+    setIsCreateModalOpen(true)
+  }
+
+  const handleEditTransaction = () => {
+    if (selectedTransaction) {
+      setTransactionType(selectedTransaction.type)
+      setFormData({
+        description: selectedTransaction.description || "",
+        client_name: selectedTransaction.client?.name || "",
+        value: selectedTransaction.value || 0,
+        due_date: selectedTransaction.due_date || "",
+        status: selectedTransaction.status || "pending",
+        payment_method: selectedTransaction.payment_method || "pix",
+      })
+      setIsEditing(true)
+      setIsCreateModalOpen(true)
+    }
+  }
+
+  const handleSaveTransaction = async () => {
+    try {
+      const newTransaction = {
+        ...formData,
+        id: isEditing ? selectedTransaction?.id : `TX-${Date.now()}`,
+        company_id: MOCK_COMPANY_ID,
+        type: transactionType,
+        client: { name: formData.client_name },
+        date: isEditing ? selectedTransaction?.due_date : new Date().toISOString().split("T")[0],
+      }
+      
+      if (isEditing) {
+        setTransactions(prev => prev.map(t => t.id === selectedTransaction?.id ? { ...t, ...newTransaction } : t))
+      } else {
+        setTransactions(prev => [...prev, newTransaction])
+      }
+      
+      setIsCreateModalOpen(false)
+      alert(isEditing ? "Transação atualizada com sucesso!" : "Transação criada com sucesso!")
+    } catch (error) {
+      console.error("Erro ao salvar transação:", error)
+      alert("Erro ao salvar transação")
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -106,11 +172,11 @@ export default function FinancialPage() {
           <p className="text-muted-foreground">Controle financeiro e fluxo de caixa</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => handleCreateTransaction("expense")}>
             <ArrowDownRight className="mr-2 h-4 w-4" />
             Nova Despesa
           </Button>
-          <Button>
+          <Button onClick={() => handleCreateTransaction("income")}>
             <Plus className="mr-2 h-4 w-4" />
             Nova Receita
           </Button>
@@ -316,9 +382,99 @@ export default function FinancialPage() {
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               Fechar
             </Button>
-            <Button>
+            <Button onClick={handleEditTransaction}>
               <Edit className="mr-2 h-4 w-4" />
               Editar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{transactionType === "income" ? "Nova Receita" : "Nova Despesa"}</DialogTitle>
+            <DialogDescription>
+              {isEditing ? "Edite as informações da transação" : `Preencha as informações da nova ${transactionType === "income" ? "receita" : "despesa"}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Descrição *</label>
+              <Input
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Descrição da transação"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">{transactionType === "income" ? "Cliente" : "Fornecedor"}</label>
+              <Input
+                value={formData.client_name}
+                onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                placeholder={transactionType === "income" ? "Nome do cliente" : "Nome do fornecedor"}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Valor</label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.value}
+                onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Data</label>
+              <Input
+                type="date"
+                value={formData.due_date}
+                onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Status</label>
+              <Select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="mt-1"
+                options={transactionType === "income" ? [
+                  { value: "pending", label: "Pendente" },
+                  { value: "received", label: "Recebido" },
+                ] : [
+                  { value: "pending", label: "Pendente" },
+                  { value: "paid", label: "Pago" },
+                ]}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Método de Pagamento</label>
+              <Select
+                value={formData.payment_method}
+                onChange={(e) => setFormData({ ...formData, payment_method: e.target.value })}
+                className="mt-1"
+                options={[
+                  { value: "pix", label: "PIX" },
+                  { value: "boleto", label: "Boleto" },
+                  { value: "transfer", label: "Transferência" },
+                  { value: "credit_card", label: "Cartão de Crédito" },
+                  { value: "debit_card", label: "Cartão de Débito" },
+                  { value: "dinheiro", label: "Dinheiro" },
+                ]}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveTransaction} disabled={!formData.description}>
+              <Plus className="mr-2 h-4 w-4" />
+              {isEditing ? "Salvar" : "Criar"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -53,6 +54,20 @@ export default function ContractsPage() {
   const [search, setSearch] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedContract, setSelectedContract] = useState<any | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [formData, setFormData] = useState({
+    client_id: "",
+    client_name: "",
+    client_document: "",
+    service_type_id: "",
+    service_type_name: "",
+    frequency: "mensal",
+    value: 0,
+    start_date: "",
+    end_date: "",
+    status: "active",
+  })
 
   useEffect(() => {
     async function loadContracts() {
@@ -91,6 +106,65 @@ export default function ContractsPage() {
     .filter((c) => c.status !== "expired")
     .reduce((acc, c) => acc + (c.value || 0), 0)
 
+  const handleCreateContract = () => {
+    setFormData({
+      client_id: "",
+      client_name: "",
+      client_document: "",
+      service_type_id: "",
+      service_type_name: "",
+      frequency: "mensal",
+      value: 0,
+      start_date: "",
+      end_date: "",
+      status: "active",
+    })
+    setIsEditing(false)
+    setIsCreateModalOpen(true)
+  }
+
+  const handleEditContract = () => {
+    if (selectedContract) {
+      setFormData({
+        client_id: selectedContract.client_id || "",
+        client_name: selectedContract.client?.name || "",
+        client_document: selectedContract.client?.document || "",
+        service_type_id: selectedContract.service_type_id || "",
+        service_type_name: selectedContract.service_type?.name || "",
+        frequency: selectedContract.frequency || "mensal",
+        value: selectedContract.value || 0,
+        start_date: selectedContract.start_date || "",
+        end_date: selectedContract.end_date || "",
+        status: selectedContract.status || "active",
+      })
+      setIsEditing(true)
+      setIsCreateModalOpen(true)
+    }
+  }
+
+  const handleSaveContract = async () => {
+    try {
+      const newContract = {
+        ...formData,
+        id: isEditing ? selectedContract?.id : `CTR-${Date.now()}`,
+        company_id: MOCK_COMPANY_ID,
+        client: { name: formData.client_name, document: formData.client_document },
+      }
+      
+      if (isEditing) {
+        setContracts(prev => prev.map(c => c.id === selectedContract?.id ? { ...c, ...newContract } : c))
+      } else {
+        setContracts(prev => [...prev, newContract])
+      }
+      
+      setIsCreateModalOpen(false)
+      alert(isEditing ? "Contrato atualizado com sucesso!" : "Contrato criado com sucesso!")
+    } catch (error) {
+      console.error("Erro ao salvar contrato:", error)
+      alert("Erro ao salvar contrato")
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -98,7 +172,7 @@ export default function ContractsPage() {
           <h1 className="text-2xl font-bold">Contratos</h1>
           <p className="text-muted-foreground">Gerencie contratos de serviços</p>
         </div>
-        <Button>
+        <Button onClick={handleCreateContract}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Contrato
         </Button>
@@ -333,9 +407,116 @@ export default function ContractsPage() {
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               Fechar
             </Button>
-            <Button>
+            <Button onClick={handleEditContract}>
               <Edit className="mr-2 h-4 w-4" />
               Editar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? "Editar Contrato" : "Novo Contrato"}</DialogTitle>
+            <DialogDescription>
+              {isEditing ? "Edite as informações do contrato" : "Preencha as informações do novo contrato"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Nome do Cliente *</label>
+              <Input
+                value={formData.client_name}
+                onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                placeholder="Nome do cliente"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">CNPJ/CPF</label>
+              <Input
+                value={formData.client_document}
+                onChange={(e) => setFormData({ ...formData, client_document: e.target.value })}
+                placeholder="CNPJ ou CPF"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Serviço</label>
+              <Input
+                value={formData.service_type_name}
+                onChange={(e) => setFormData({ ...formData, service_type_name: e.target.value })}
+                placeholder="Tipo de serviço"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Frequência</label>
+              <Select
+                value={formData.frequency}
+                onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
+                className="mt-1"
+                options={[
+                  { value: "semanal", label: "Semanal" },
+                  { value: "quinzenal", label: "Quinzenal" },
+                  { value: "mensal", label: "Mensal" },
+                  { value: "bimestral", label: "Bimestral" },
+                  { value: "trimestral", label: "Trimestral" },
+                  { value: "semestral", label: "Semestral" },
+                  { value: "anual", label: "Anual" },
+                ]}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Valor</label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.value}
+                onChange={(e) => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Status</label>
+              <Select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="mt-1"
+                options={[
+                  { value: "active", label: "Ativo" },
+                  { value: "expiring", label: "Expirando" },
+                  { value: "expired", label: "Expirado" },
+                ]}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Data de Início</label>
+              <Input
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Data de Término</label>
+              <Input
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveContract} disabled={!formData.client_name}>
+              <Plus className="mr-2 h-4 w-4" />
+              {isEditing ? "Salvar" : "Criar"}
             </Button>
           </DialogFooter>
         </DialogContent>

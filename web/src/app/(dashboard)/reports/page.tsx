@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ import {
   QrCode,
   Share2,
   Loader2,
+  Edit,
 } from "lucide-react"
 import { formatDate, getStatusColor, getStatusLabel } from "@/lib/utils"
 import { getReports } from "@/lib/data"
@@ -48,6 +50,16 @@ export default function ReportsPage() {
   const [search, setSearch] = useState("")
   const [selectedReport, setSelectedReport] = useState<any | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [formData, setFormData] = useState({
+    work_order_id: "",
+    client_name: "",
+    service_type_name: "",
+    report_type: "dedetization",
+    status: "draft",
+    valid_until: "",
+  })
 
   useEffect(() => {
     async function loadReports() {
@@ -79,6 +91,59 @@ export default function ReportsPage() {
     expired: reports.filter((r) => r.status === "expired").length,
   }
 
+  const handleCreateReport = () => {
+    setFormData({
+      work_order_id: "",
+      client_name: "",
+      service_type_name: "",
+      report_type: "dedetization",
+      status: "draft",
+      valid_until: "",
+    })
+    setIsEditing(false)
+    setIsCreateModalOpen(true)
+  }
+
+  const handleEditReport = () => {
+    if (selectedReport) {
+      setFormData({
+        work_order_id: selectedReport.work_order_id || "",
+        client_name: selectedReport.client?.name || "",
+        service_type_name: selectedReport.service_type?.name || "",
+        report_type: selectedReport.report_type || "dedetization",
+        status: selectedReport.status || "draft",
+        valid_until: selectedReport.valid_until || "",
+      })
+      setIsEditing(true)
+      setIsCreateModalOpen(true)
+    }
+  }
+
+  const handleSaveReport = async () => {
+    try {
+      const newReport = {
+        ...formData,
+        id: isEditing ? selectedReport?.id : `L-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`,
+        company_id: MOCK_COMPANY_ID,
+        client: { name: formData.client_name },
+        issue_date: isEditing ? selectedReport?.created_at : new Date().toISOString().split("T")[0],
+        qr_code: formData.status === "approved" ? `QR-${Date.now()}` : null,
+      }
+      
+      if (isEditing) {
+        setReports(prev => prev.map(r => r.id === selectedReport?.id ? { ...r, ...newReport } : r))
+      } else {
+        setReports(prev => [...prev, newReport])
+      }
+      
+      setIsCreateModalOpen(false)
+      alert(isEditing ? "Laudo atualizado com sucesso!" : "Laudo criado com sucesso!")
+    } catch (error) {
+      console.error("Erro ao salvar laudo:", error)
+      alert("Erro ao salvar laudo")
+    }
+  }
+
   const handleViewReport = (report: any) => {
     setSelectedReport(report)
     setIsModalOpen(true)
@@ -91,7 +156,7 @@ export default function ReportsPage() {
           <h1 className="text-2xl font-bold">Laudos Técnicos</h1>
           <p className="text-muted-foreground">Gerencie os laudos e certificados emitidos</p>
         </div>
-        <Button>
+        <Button onClick={handleCreateReport}>
           <FileText className="mr-2 h-4 w-4" />
           Novo Laudo
         </Button>
@@ -353,6 +418,96 @@ export default function ReportsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               Fechar
+            </Button>
+            <Button onClick={handleEditReport}>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? "Editar Laudo" : "Novo Laudo"}</DialogTitle>
+            <DialogDescription>
+              {isEditing ? "Edite as informações do laudo" : "Preencha as informações do novo laudo"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Ordem de Serviço</label>
+              <Input
+                value={formData.work_order_id}
+                onChange={(e) => setFormData({ ...formData, work_order_id: e.target.value })}
+                placeholder="OS-001"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Cliente *</label>
+              <Input
+                value={formData.client_name}
+                onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                placeholder="Nome do cliente"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Serviço</label>
+              <Input
+                value={formData.service_type_name}
+                onChange={(e) => setFormData({ ...formData, service_type_name: e.target.value })}
+                placeholder="Tipo de serviço"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Tipo de Laudo</label>
+              <Select
+                value={formData.report_type}
+                onChange={(e: any) => setFormData({ ...formData, report_type: e.target.value })}
+                className="mt-1"
+                options={[
+                  { value: "dedetization", label: "Laudo de Dedetização" },
+                  { value: "mip", label: "Laudo MIP" },
+                  { value: "certification", label: "Certificado" },
+                  { value: "sanitary", label: "Laudo Sanitário" },
+                ]}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Status</label>
+              <Select
+                value={formData.status}
+                onChange={(e: any) => setFormData({ ...formData, status: e.target.value })}
+                className="mt-1"
+                options={[
+                  { value: "draft", label: "Rascunho" },
+                  { value: "pending_approval", label: "Aguardando Aprovação" },
+                  { value: "approved", label: "Aprovado" },
+                  { value: "sent", label: "Enviado" },
+                ]}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Validade</label>
+              <Input
+                type="date"
+                value={formData.valid_until}
+                onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveReport} disabled={!formData.client_name}>
+              <FileText className="mr-2 h-4 w-4" />
+              {isEditing ? "Salvar" : "Criar"}
             </Button>
           </DialogFooter>
         </DialogContent>

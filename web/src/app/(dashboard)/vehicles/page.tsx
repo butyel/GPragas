@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,17 @@ export default function VehiclesPage() {
   const [search, setSearch] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedVehicle, setSelectedVehicle] = useState<any | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [formData, setFormData] = useState({
+    license_plate: "",
+    model: "",
+    year: new Date().getFullYear(),
+    color: "",
+    status: "active",
+    current_km: 0,
+    fuel_type: "gasolina",
+  })
 
   useEffect(() => {
     async function loadVehicles() {
@@ -76,6 +88,61 @@ export default function VehiclesPage() {
 
   const totalKm = vehicles.reduce((acc, v) => acc + (v.current_km || 0), 0)
 
+  const handleCreateVehicle = () => {
+    setFormData({
+      license_plate: "",
+      model: "",
+      year: new Date().getFullYear(),
+      color: "",
+      status: "active",
+      current_km: 0,
+      fuel_type: "gasolina",
+    })
+    setIsEditing(false)
+    setIsCreateModalOpen(true)
+  }
+
+  const handleEditVehicle = () => {
+    if (selectedVehicle) {
+      setFormData({
+        license_plate: selectedVehicle.license_plate || "",
+        model: selectedVehicle.model || "",
+        year: selectedVehicle.year || new Date().getFullYear(),
+        color: selectedVehicle.color || "",
+        status: selectedVehicle.status || "active",
+        current_km: selectedVehicle.current_km || 0,
+        fuel_type: selectedVehicle.fuel_type || "gasolina",
+      })
+      setIsEditing(true)
+      setIsCreateModalOpen(true)
+    }
+  }
+
+  const handleSaveVehicle = async () => {
+    try {
+      const newVehicle = {
+        ...formData,
+        id: isEditing ? selectedVehicle?.id : `VEH-${Date.now()}`,
+        company_id: MOCK_COMPANY_ID,
+        assigned_technician: isEditing ? selectedVehicle?.assigned_technician : null,
+        last_maintenance: isEditing ? selectedVehicle?.last_maintenance : null,
+        next_maintenance: isEditing ? selectedVehicle?.next_maintenance : null,
+      }
+      
+      if (isEditing) {
+        setVehicles(prev => prev.map(v => v.id === selectedVehicle?.id ? { ...v, ...newVehicle } : v))
+      } else {
+        setVehicles(prev => [...prev, newVehicle])
+      }
+      
+      setIsCreateModalOpen(false)
+      alert(isEditing ? "Veículo atualizado com sucesso!" : "Veículo criado com sucesso!")
+    } catch (error) {
+      console.error("Erro ao salvar veículo:", error)
+      alert("Erro ao salvar veículo")
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -83,7 +150,7 @@ export default function VehiclesPage() {
           <h1 className="text-2xl font-bold">Veículos</h1>
           <p className="text-muted-foreground">Gerencie a frota de veículos</p>
         </div>
-        <Button>
+        <Button onClick={handleCreateVehicle}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Veículo
         </Button>
@@ -304,9 +371,103 @@ export default function VehiclesPage() {
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               Fechar
             </Button>
-            <Button>
+            <Button onClick={handleEditVehicle}>
               <Edit className="mr-2 h-4 w-4" />
               Editar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? "Editar Veículo" : "Novo Veículo"}</DialogTitle>
+            <DialogDescription>
+              {isEditing ? "Edite as informações do veículo" : "Preencha as informações do novo veículo"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Placa *</label>
+              <Input
+                value={formData.license_plate}
+                onChange={(e) => setFormData({ ...formData, license_plate: e.target.value.toUpperCase() })}
+                placeholder="ABC-1234"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Modelo *</label>
+              <Input
+                value={formData.model}
+                onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+                placeholder="Ford Ranger"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Ano</label>
+              <Input
+                type="number"
+                value={formData.year}
+                onChange={(e) => setFormData({ ...formData, year: parseInt(e.target.value) || new Date().getFullYear() })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Cor</label>
+              <Input
+                value={formData.color}
+                onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                placeholder="Branca"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Status</label>
+              <Select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="mt-1"
+                options={[
+                  { value: "active", label: "Ativo" },
+                  { value: "maintenance", label: "Em Manutenção" },
+                  { value: "inactive", label: "Inativo" },
+                ]}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Km Atual</label>
+              <Input
+                type="number"
+                value={formData.current_km}
+                onChange={(e) => setFormData({ ...formData, current_km: parseInt(e.target.value) || 0 })}
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Tipo de Combustível</label>
+              <Select
+                value={formData.fuel_type}
+                onChange={(e) => setFormData({ ...formData, fuel_type: e.target.value })}
+                className="mt-1"
+                options={[
+                  { value: "gasolina", label: "Gasolina" },
+                  { value: "diesel", label: "Diesel" },
+                  { value: "flex", label: "Flex" },
+                  { value: "eletrico", label: "Elétrico" },
+                ]}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveVehicle} disabled={!formData.license_plate || !formData.model}>
+              <Plus className="mr-2 h-4 w-4" />
+              {isEditing ? "Salvar" : "Criar"}
             </Button>
           </DialogFooter>
         </DialogContent>

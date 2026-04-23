@@ -13,12 +13,13 @@ import {
   Truck,
   BarChart3,
   Settings,
-  Building2,
   FileClock,
   DollarSign,
   MessageSquare,
   Megaphone,
   Bug,
+  Wrench,
+  LogOut,
 } from "lucide-react"
 
 const navigation = [
@@ -28,14 +29,14 @@ const navigation = [
   { name: "Ordens de Serviço", href: "/work-orders", icon: ClipboardList },
   { name: "Laudos", href: "/reports", icon: FileText },
   { name: "Produtos", href: "/products", icon: Package },
-  { name: "Técnicos", href: "/technicians", icon: Bug },
+  { name: "Técnicos", href: "/technicians", icon: Wrench },
   { name: "Contratos", href: "/contracts", icon: FileClock },
   { name: "Financeiro", href: "/financial", icon: DollarSign },
   { name: "Veículos", href: "/vehicles", icon: Truck },
-  { name: "Relatórios", href: "/reports/analytics", icon: BarChart3 },
-  { name: "Comunicações", href: "/communications", icon: MessageSquare },
   { name: "Orçamentos", href: "/quotes", icon: Megaphone },
-  { name: "Empresa", href: "/settings/company", icon: Building2 },
+  { name: "Comunicações", href: "/communications", icon: MessageSquare },
+  { name: "Analytics", href: "/reports/analytics", icon: BarChart3 },
+  { name: "Configurações", href: "/settings/company", icon: Settings },
 ]
 
 interface SidebarProps {
@@ -46,13 +47,17 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
 
   return (
-    <div className={cn("flex h-full flex-col bg-primary-dark text-white", className)}>
-      <div className="flex h-16 items-center px-6 border-b border-primary/30">
-        <Bug className="h-8 w-8 text-white/90 mr-2" />
-        <span className="text-xl font-bold text-white">GPRAGAS</span>
+    <div className={cn("flex h-full flex-col bg-white border-r border-border", className)}>
+      <div className="flex h-16 items-center px-5 border-b border-border">
+        <div className="flex items-center gap-2">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-glow">
+            <Bug className="h-5 w-5 text-white" />
+          </div>
+          <span className="text-lg font-bold text-foreground">GPRAGAS</span>
+        </div>
       </div>
 
-      <nav className="flex-1 overflow-y-auto py-4">
+      <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin">
         <ul className="space-y-1 px-3">
           {navigation.map((item) => {
             const isActive = pathname === item.href || pathname.startsWith(item.href + "/")
@@ -61,13 +66,16 @@ export function Sidebar({ className }: SidebarProps) {
                 <Link
                   href={item.href}
                   className={cn(
-                    "flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-all duration-200",
+                    "flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
                     isActive
-                      ? "bg-secondary text-white shadow-sm"
-                      : "text-white/70 hover:bg-secondary hover:text-white"
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
-                  <item.icon className="mr-3 h-5 w-5" />
+                  <item.icon className={cn(
+                    "mr-3 h-5 w-5 transition-colors",
+                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                  )} />
                   {item.name}
                 </Link>
               </li>
@@ -76,14 +84,11 @@ export function Sidebar({ className }: SidebarProps) {
         </ul>
       </nav>
 
-      <div className="border-t border-white/10 p-4">
-        <Link
-          href="/settings"
-          className="flex items-center rounded-md px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-secondary hover:text-white transition-all duration-200"
-        >
-          <Settings className="mr-3 h-5 w-5" />
-          Configurações
-        </Link>
+      <div className="p-4 border-t border-border">
+        <button className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-destructive transition-all">
+          <LogOut className="mr-3 h-5 w-5" />
+          Sair
+        </button>
       </div>
     </div>
   )

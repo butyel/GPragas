@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,18 @@ export default function TechniciansPage() {
   const [search, setSearch] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedTechnician, setSelectedTechnician] = useState<any | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [formData, setFormData] = useState({
+    name: "",
+    document: "",
+    phone: "",
+    email: "",
+    city: "",
+    state: "",
+    status: "active",
+    vehicle: "",
+  })
 
   useEffect(() => {
     async function loadTechnicians() {
@@ -80,6 +93,62 @@ export default function TechniciansPage() {
   
   const totalServices = technicians.reduce((acc, t) => acc + (t.services_total || 0), 0)
 
+  const handleCreateTechnician = () => {
+    setFormData({
+      name: "",
+      document: "",
+      phone: "",
+      email: "",
+      city: "",
+      state: "",
+      status: "active",
+      vehicle: "",
+    })
+    setIsEditing(false)
+    setIsCreateModalOpen(true)
+  }
+
+  const handleEditTechnician = () => {
+    if (selectedTechnician) {
+      setFormData({
+        name: selectedTechnician.name || "",
+        document: selectedTechnician.document || "",
+        phone: selectedTechnician.phone || "",
+        email: selectedTechnician.email || "",
+        city: selectedTechnician.city || "",
+        state: selectedTechnician.state || "",
+        status: selectedTechnician.status || "active",
+        vehicle: selectedTechnician.vehicle || "",
+      })
+      setIsEditing(true)
+      setIsCreateModalOpen(true)
+    }
+  }
+
+  const handleSaveTechnician = async () => {
+    try {
+      const newTechnician = {
+        ...formData,
+        id: isEditing ? selectedTechnician?.id : `TECH-${Date.now()}`,
+        user_id: isEditing ? selectedTechnician?.user_id : `user-${Date.now()}`,
+        rating: isEditing ? selectedTechnician?.rating : 5.0,
+        services_total: isEditing ? selectedTechnician?.services_total : 0,
+      }
+      
+      if (isEditing) {
+        setTechnicians(prev => prev.map(t => t.id === selectedTechnician?.id ? { ...t, ...newTechnician } : t))
+      } else {
+        setTechnicians(prev => [...prev, newTechnician])
+      }
+      
+      setIsCreateModalOpen(false)
+      alert(isEditing ? "Técnico atualizado com sucesso!" : "Técnico criado com sucesso!")
+    } catch (error) {
+      console.error("Erro ao salvar técnico:", error)
+      alert("Erro ao salvar técnico")
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -87,7 +156,7 @@ export default function TechniciansPage() {
           <h1 className="text-2xl font-bold">Técnicos</h1>
           <p className="text-muted-foreground">Gerencie a equipe de técnicos</p>
         </div>
-        <Button>
+        <Button onClick={handleCreateTechnician}>
           <Plus className="mr-2 h-4 w-4" />
           Novo Técnico
         </Button>
@@ -321,6 +390,104 @@ export default function TechniciansPage() {
             <Button>
               <Edit className="mr-2 h-4 w-4" />
               Editar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? "Editar Técnico" : "Novo Técnico"}</DialogTitle>
+            <DialogDescription>
+              {isEditing ? "Edite as informações do técnico" : "Preencha as informações do novo técnico"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Nome *</label>
+              <Input
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Nome completo"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">CPF</label>
+              <Input
+                value={formData.document}
+                onChange={(e) => setFormData({ ...formData, document: e.target.value })}
+                placeholder="CPF"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Telefone</label>
+              <Input
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="(11) 99999-9999"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Email</label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                placeholder="email@exemplo.com"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Cidade</label>
+              <Input
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                placeholder="Cidade"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Estado</label>
+              <Input
+                value={formData.state}
+                onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                placeholder="SP"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Status</label>
+              <Select
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                className="mt-1"
+                options={[
+                  { value: "active", label: "Ativo" },
+                  { value: "inactive", label: "Inativo" },
+                ]}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Veículo</label>
+              <Input
+                value={formData.vehicle}
+                onChange={(e) => setFormData({ ...formData, vehicle: e.target.value })}
+                placeholder="Placa do veículo"
+                className="mt-1"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveTechnician} disabled={!formData.name}>
+              <Plus className="mr-2 h-4 w-4" />
+              {isEditing ? "Salvar" : "Criar"}
             </Button>
           </DialogFooter>
         </DialogContent>

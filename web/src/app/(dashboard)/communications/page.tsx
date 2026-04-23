@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,14 @@ export default function CommunicationsPage() {
   const [search, setSearch] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [selectedMessage, setSelectedMessage] = useState<any | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isEditing, setIsEditing] = useState(false)
+  const [formData, setFormData] = useState({
+    type: "whatsapp",
+    title: "",
+    client_name: "",
+    message: "",
+  })
 
   useEffect(() => {
     async function loadCommunications() {
@@ -100,6 +109,56 @@ export default function CommunicationsPage() {
     ? Math.round((messages.filter((m) => m.status === "opened" || m.status === "replied").length / messages.length) * 100)
     : 0
 
+  const handleCreateMessage = () => {
+    setFormData({
+      type: "whatsapp",
+      title: "",
+      client_name: "",
+      message: "",
+    })
+    setIsEditing(false)
+    setIsCreateModalOpen(true)
+  }
+
+  const handleEditMessage = () => {
+    if (selectedMessage) {
+      setFormData({
+        type: selectedMessage.type || "whatsapp",
+        title: selectedMessage.title || "",
+        client_name: selectedMessage.client?.name || "",
+        message: selectedMessage.message || "",
+      })
+      setIsEditing(true)
+      setIsCreateModalOpen(true)
+    }
+  }
+
+  const handleSaveMessage = async () => {
+    try {
+      const now = new Date().toISOString()
+      const newMessage = {
+        ...formData,
+        id: isEditing ? selectedMessage?.id : `MSG-${Date.now()}`,
+        company_id: MOCK_COMPANY_ID,
+        client: { name: formData.client_name },
+        sent_at: isEditing ? selectedMessage?.sent_at : now,
+        status: "delivered",
+      }
+      
+      if (isEditing) {
+        setMessages(prev => prev.map(m => m.id === selectedMessage?.id ? { ...m, ...newMessage } : m))
+      } else {
+        setMessages(prev => [...prev, newMessage])
+      }
+      
+      setIsCreateModalOpen(false)
+      alert(isEditing ? "Mensagem atualizada com sucesso!" : "Mensagem enviada com sucesso!")
+    } catch (error) {
+      console.error("Erro ao salvar mensagem:", error)
+      alert("Erro ao salvar mensagem")
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -107,7 +166,7 @@ export default function CommunicationsPage() {
           <h1 className="text-2xl font-bold">Comunicações</h1>
           <p className="text-muted-foreground">Gerencie notificações e mensagens</p>
         </div>
-        <Button>
+        <Button onClick={handleCreateMessage}>
           <Plus className="mr-2 h-4 w-4" />
           Nova Mensagem
         </Button>
@@ -294,9 +353,73 @@ export default function CommunicationsPage() {
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
               Fechar
             </Button>
-            <Button>
+            <Button onClick={handleEditMessage}>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? "Editar Mensagem" : "Nova Mensagem"}</DialogTitle>
+            <DialogDescription>
+              {isEditing ? "Edite as informações da mensagem" : "Preencha as informações da nova mensagem"}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Tipo de Mensagem</label>
+                <Select
+                  value={formData.type}
+                  onChange={(e: any) => setFormData({ ...formData, type: e.target.value })}
+                  className="mt-1"
+                  options={[
+                    { value: "whatsapp", label: "WhatsApp" },
+                    { value: "email", label: "Email" },
+                    { value: "sms", label: "SMS" },
+                  ]}
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Destinatário *</label>
+                <Input
+                  value={formData.client_name}
+                  onChange={(e) => setFormData({ ...formData, client_name: e.target.value })}
+                  placeholder="Nome do cliente"
+                  className="mt-1"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Título</label>
+              <Input
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Título da mensagem"
+                className="mt-1"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-muted-foreground">Mensagem</label>
+              <textarea
+                value={formData.message}
+                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                placeholder="Digite sua mensagem..."
+                className="mt-1 w-full p-3 border rounded-md min-h-[120px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveMessage} disabled={!formData.client_name || !formData.message}>
               <Send className="mr-2 h-4 w-4" />
-              Reenviar
+              {isEditing ? "Salvar" : "Enviar"}
             </Button>
           </DialogFooter>
         </DialogContent>

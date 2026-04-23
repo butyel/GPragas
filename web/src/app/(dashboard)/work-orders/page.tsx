@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -32,146 +33,134 @@ import {
   Eye,
   Edit,
   Trash2,
+  ArrowUpDown,
+  Filter,
+  X,
+  ChevronRight,
+  MapPinned,
 } from "lucide-react"
 import { formatDate, formatTime, formatCurrency, getStatusColor, getStatusLabel } from "@/lib/utils"
-
-const mockWorkOrders = [
-  {
-    id: "OS-001",
-    client: "Restaurante Sabor Caseiro",
-    client_document: "12.345.678/0001-90",
-    service: "Desinsetização",
-    target_pests: ["baratas", "formigas"],
-    technician: "João Silva",
-    status: "scheduled",
-    scheduled_date: "2026-04-16",
-    scheduled_time: "14:00",
-    address: "Rua das Flores, 123",
-    city: "São Paulo",
-    state: "SP",
-    value: 150.00,
-  },
-  {
-    id: "OS-002",
-    client: "Empresa ABC Ltda",
-    client_document: "98.765.432/0001-10",
-    service: "Desratização",
-    target_pests: ["ratos"],
-    technician: "Maria Santos",
-    status: "in_progress",
-    scheduled_date: "2026-04-16",
-    scheduled_time: "09:00",
-    address: "Av. Paulista, 1000",
-    city: "São Paulo",
-    state: "SP",
-    value: 180.00,
-  },
-  {
-    id: "OS-003",
-    client: "Casa da Família Silva",
-    client_document: "123.456.789-00",
-    service: "Dedetização Completa",
-    target_pests: ["baratas", "mosquitos", "formigas"],
-    technician: "João Silva",
-    status: "completed",
-    scheduled_date: "2026-04-15",
-    scheduled_time: "10:00",
-    address: "Rua dos Pinheiros, 456",
-    city: "São Paulo",
-    state: "SP",
-    value: 250.00,
-  },
-  {
-    id: "OS-004",
-    client: "Supermercado Bom Preço",
-    client_document: "55.444.333/0001-22",
-    service: "MIP - Manejo Integrado",
-    target_pests: ["baratas", "roedores"],
-    technician: "Carlos Oliveira",
-    status: "pending_report",
-    scheduled_date: "2026-04-15",
-    scheduled_time: "15:30",
-    address: "Av. Brasil, 500",
-    city: "São Paulo",
-    state: "SP",
-    value: 450.00,
-  },
-  {
-    id: "OS-005",
-    client: "Clínica Saúde",
-    client_document: "11.222.333/0001-44",
-    service: "Sanitização Hospitalar",
-    target_pests: ["bactérias", "vírus"],
-    technician: "Maria Santos",
-    status: "scheduled",
-    scheduled_date: "2026-04-17",
-    scheduled_time: "08:00",
-    address: "Rua das Clínicas, 200",
-    city: "São Paulo",
-    state: "SP",
-    value: 350.00,
-  },
-  {
-    id: "OS-006",
-    client: "Hotel Paradiso",
-    client_document: "22.333.444/0001-55",
-    service: "Dedetização",
-    target_pests: ["baratas", "mosquitos"],
-    technician: "João Silva",
-    status: "cancelled",
-    scheduled_date: "2026-04-14",
-    scheduled_time: "11:00",
-    address: "Av. Hotels, 100",
-    city: "São Paulo",
-    state: "SP",
-    value: 200.00,
-  },
-]
-
-const statusOptions = [
-  { value: "", label: "Todos os status" },
-  { value: "scheduled", label: "Agendada" },
-  { value: "in_transit", label: "Em deslocamento" },
-  { value: "in_progress", label: "Em execução" },
-  { value: "completed", label: "Concluída" },
-  { value: "pending_report", label: "Aguardando laudo" },
-  { value: "cancelled", label: "Cancelada" },
-]
-
-const technicianOptions = [
-  { value: "", label: "Todos os técnicos" },
-  { value: "1", label: "João Silva" },
-  { value: "2", label: "Maria Santos" },
-  { value: "3", label: "Carlos Oliveira" },
-]
+import { supabase } from "@/lib/supabase"
+import { getWorkOrders, getWorkOrderById } from "@/lib/data"
 
 export default function WorkOrdersPage() {
+  const [workOrders, setWorkOrders] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [status, setStatus] = useState("")
   const [technician, setTechnician] = useState("")
+  const [sortBy, setSortBy] = useState("scheduled_date")
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc")
+  const [dateFrom, setDateFrom] = useState("")
+  const [dateTo, setDateTo] = useState("")
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedOrder, setSelectedOrder] = useState<typeof mockWorkOrders[0] | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null)
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const router = useRouter()
 
-  const filteredOrders = mockWorkOrders.filter((order) => {
+  const MOCK_COMPANY_ID = "demo-company"
+
+  useEffect(() => {
+    async function loadWorkOrders() {
+      try {
+        const data = await getWorkOrders(MOCK_COMPANY_ID, {
+          status: status || undefined,
+          technicianId: technician || undefined,
+        })
+        setWorkOrders(data || [])
+      } catch (error) {
+        console.error("Erro ao carregar ordens de serviço:", error)
+        setWorkOrders([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadWorkOrders()
+  }, [search, status, technician])
+
+  const filteredOrders = workOrders.filter((order) => {
     const matchesSearch =
       order.id.toLowerCase().includes(search.toLowerCase()) ||
-      order.client.toLowerCase().includes(search.toLowerCase())
-    const matchesStatus = !status || order.status === status
-    const matchesTechnician = !technician || order.technician.includes(technician)
-    return matchesSearch && matchesStatus && matchesTechnician
+      order.client?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      order.client?.document?.includes(search)
+    const matchesDateFrom = !dateFrom || order.scheduled_date >= dateFrom
+    const matchesDateTo = !dateTo || order.scheduled_date <= dateTo
+    return matchesSearch && matchesDateFrom && matchesDateTo
+  }).sort((a, b) => {
+    let aVal = a[sortBy]
+    let bVal = b[sortBy]
+    if (sortBy === "scheduled_date") {
+      aVal = `${a.scheduled_date}T${a.scheduled_time || "00:00"}`
+      bVal = `${b.scheduled_date}T${b.scheduled_time || "00:00"}`
+    }
+    if (sortOrder === "asc") {
+      return aVal > bVal ? 1 : -1
+    }
+    return aVal < bVal ? 1 : -1
   })
 
-  const statusCounts = {
-    scheduled: mockWorkOrders.filter((o) => o.status === "scheduled").length,
-    in_transit: mockWorkOrders.filter((o) => o.status === "in_transit").length,
-    in_progress: mockWorkOrders.filter((o) => o.status === "in_progress").length,
-    completed: mockWorkOrders.filter((o) => o.status === "completed").length,
-    pending_report: mockWorkOrders.filter((o) => o.status === "pending_report").length,
+  const clearFilters = () => {
+    setSearch("")
+    setStatus("")
+    setTechnician("")
+    setDateFrom("")
+    setDateTo("")
+    setSortBy("scheduled_date")
+    setSortOrder("desc")
   }
 
-  const handleViewOrder = (order: typeof mockWorkOrders[0]) => {
-    setSelectedOrder(order)
-    setIsModalOpen(true)
+  const hasFilters = search || status || technician || dateFrom || dateTo
+
+  const handleStatusChange = async (orderId: string, newStatus: string) => {
+    setUpdatingStatus(orderId)
+    try {
+      await supabase.from("work_orders").update({ status: newStatus }).eq("id", orderId)
+      setWorkOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error)
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
+  const getNextStatus = (currentStatus: string) => {
+    const flow: Record<string, string> = {
+      scheduled: "in_transit",
+      in_transit: "in_progress",
+      in_progress: "completed",
+    }
+    return flow[currentStatus]
+  }
+
+  const getNextStatusLabel = (currentStatus: string) => {
+    const labels: Record<string, string> = {
+      scheduled: "Iniciar Deslocamento",
+      in_transit: "Iniciar Serviço",
+      in_progress: "Concluir Serviço",
+    }
+    return labels[currentStatus]
+  }
+
+  const statusCounts = {
+    scheduled: workOrders.filter((o) => o.status === "scheduled").length,
+    in_transit: workOrders.filter((o) => o.status === "in_transit").length,
+    in_progress: workOrders.filter((o) => o.status === "in_progress").length,
+    completed: workOrders.filter((o) => o.status === "completed").length,
+    pending_report: workOrders.filter((o) => o.status === "pending_report").length,
+    cancelled: workOrders.filter((o) => o.status === "cancelled").length,
+  }
+
+  const handleViewOrder = async (order: any) => {
+    try {
+      const fullOrder = await getWorkOrderById(order.id)
+      setSelectedOrder(fullOrder)
+      setIsModalOpen(true)
+    } catch (error) {
+      console.error("Erro ao carregar ordem de serviço:", error)
+      setSelectedOrder(order)
+      setIsModalOpen(true)
+    }
   }
 
   const getStatusIcon = (status: string) => {
@@ -191,6 +180,17 @@ export default function WorkOrdersPage() {
       default:
         return <Clock className="h-4 w-4" />
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="flex items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          <p className="text-muted-foreground">Carregando ordens de serviço...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -265,6 +265,17 @@ export default function WorkOrdersPage() {
             </div>
           </CardContent>
         </Card>
+        <Card className="shadow-card">
+          <CardContent className="p-4 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Canceladas</p>
+              <p className="text-2xl font-bold">{statusCounts.cancelled}</p>
+            </div>
+            <div className="h-10 w-10 rounded-full bg-red-100 flex items-center justify-center">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
@@ -280,18 +291,66 @@ export default function WorkOrdersPage() {
                 className="pl-10"
               />
             </div>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="w-full md:w-36"
+              placeholder="De"
+            />
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="w-full md:w-36"
+              placeholder="Até"
+            />
             <Select
-              options={statusOptions}
+              options={[
+                { value: "", label: "Todos os status" },
+                { value: "scheduled", label: "Agendada" },
+                { value: "in_transit", label: "Em deslocamento" },
+                { value: "in_progress", label: "Em execução" },
+                { value: "completed", label: "Concluída" },
+                { value: "pending_report", label: "Aguardando laudo" },
+                { value: "cancelled", label: "Cancelada" },
+              ]}
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               className="w-full md:w-40"
             />
             <Select
-              options={technicianOptions}
+              options={[
+                { value: "", label: "Todos os técnicos" },
+              ]}
               value={technician}
               onChange={(e) => setTechnician(e.target.value)}
               className="w-full md:w-48"
+              placeholder="Filtrar por técnico"
             />
+            <Select
+              options={[
+                { value: "scheduled_date", label: "Data" },
+                { value: "id", label: "OS" },
+                { value: "value", label: "Valor" },
+              ]}
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="w-full md:w-32"
+            />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+              title={sortOrder === "asc" ? "Crescente" : "Decrescente"}
+            >
+              <ArrowUpDown className={`h-4 w-4 ${sortOrder === "asc" ? "rotate-180" : ""}`} />
+            </Button>
+            {hasFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                <X className="h-4 w-4 mr-1" /> Limpar
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -299,83 +358,131 @@ export default function WorkOrdersPage() {
       {/* Work Orders List */}
       <Card className="shadow-card">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-surface-elevated border-b">
-                <tr>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">OS</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Cliente</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Serviço</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Técnico</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Data/Hora</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Status</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Valor</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredOrders.map((order) => (
-                  <tr key={order.id} className="border-b hover:bg-surface-elevated transition-colors">
-                    <td className="p-4">
-                      <span className="font-mono font-medium">{order.id}</span>
-                    </td>
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">{order.client}</p>
-                        <p className="text-xs text-muted-foreground">{order.address}</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div>
-                        <p className="text-sm">{order.service}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {order.target_pests.join(", ")}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                        {order.technician}
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <div className="text-sm">
-                        <p>{formatDate(order.scheduled_date)}</p>
-                        <p className="text-muted-foreground">{formatTime(order.scheduled_time)}</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <Badge className={getStatusColor(order.status)}>
-                        <span className="flex items-center gap-1">
-                          {getStatusIcon(order.status)}
-                          {getStatusLabel(order.status)}
-                        </span>
-                      </Badge>
-                    </td>
-                    <td className="p-4">
-                      <span className="font-medium">{formatCurrency(order.value)}</span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleViewOrder(order)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        {order.status === "completed" && (
-                          <Button variant="ghost" size="icon">
-                            <FileText className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
+          {filteredOrders.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <ClipboardList className="h-12 w-12 mb-2 opacity-50" />
+              <p>Nenhuma ordem de serviço encontrada</p>
+              <Link href="/work-orders/new">
+                <Button variant="link" className="mt-2">
+                  Criar primeira OS
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-surface-elevated border-b">
+                  <tr>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">OS</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Cliente</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Serviço</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Técnico</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Data/Hora</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Status</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Valor</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredOrders.map((order) => (
+                    <tr key={order.id} className="border-b hover:bg-surface-elevated transition-colors">
+                      <td className="p-4">
+                        <span className="font-mono font-medium">{order.id}</span>
+                      </td>
+                      <td className="p-4">
+                        <div>
+                          <p className="font-medium">{order.client?.name || 'Cliente não encontrado'}</p>
+                          <p className="text-xs text-muted-foreground">{order.client?.document || ''}</p>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div>
+                          <p className="text-sm">{order.service_type?.name || 'Serviço não especificado'}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {order.target_pests?.join(", ") || ''}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center">
+                          <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                          {order.technician?.user?.full_name || 'Técnico não atribuído'}
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <div className="text-sm">
+                          <p>{formatDate(order.scheduled_date)}</p>
+                          <p className="text-muted-foreground">{formatTime(order.scheduled_time)}</p>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Badge className={getStatusColor(order.status)}>
+                          <span className="flex items-center gap-1">
+                            {getStatusIcon(order.status)}
+                            {getStatusLabel(order.status)}
+                          </span>
+                        </Badge>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-medium">{formatCurrency(order.value || 0)}</span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-1">
+                          <Button variant="ghost" size="icon" onClick={() => handleViewOrder(order)} title="Ver detalhes">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {order.status !== "completed" && order.status !== "cancelled" && getNextStatus(order.status) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleStatusChange(order.id, getNextStatus(order.status))}
+                              disabled={updatingStatus === order.id}
+                              title={getNextStatusLabel(order.status)}
+                              className="text-primary"
+                            >
+                              {updatingStatus === order.id ? (
+                                <Clock className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
+                              )}
+                            </Button>
+                          )}
+                          {(order.status === "scheduled" || order.status === "in_transit" || order.status === "in_progress") && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => router.push(`/work-orders/execute/${order.id}`)}
+                              title="Executar OS"
+                              className="text-green-600"
+                            >
+                              <PlayCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {order.status === "completed" && (
+                            <Button variant="ghost" size="icon" title="Gerar Laudo">
+                              <FileText className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {order.status === "in_progress" && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleStatusChange(order.id, "cancelled")}
+                              disabled={updatingStatus === order.id}
+                              title="Cancelar OS"
+                              className="text-red-500"
+                            >
+                              <AlertCircle className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -401,42 +508,46 @@ export default function WorkOrdersPage() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Serviço</label>
-                  <p className="font-medium">{selectedOrder.service}</p>
+                  <p className="font-medium">{selectedOrder.service_type?.name || 'Serviço não especificado'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Cliente</label>
-                  <p className="font-medium">{selectedOrder.client}</p>
+                  <p className="font-medium">{selectedOrder.client?.name || 'Cliente não encontrado'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">CNPJ/CPF</label>
-                  <p className="font-mono">{selectedOrder.client_document}</p>
+                  <p className="font-mono">{selectedOrder.client?.document || ''}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Técnico</label>
-                  <p className="font-medium">{selectedOrder.technician}</p>
+                  <p className="font-medium">{selectedOrder.technician?.user?.full_name || 'Técnico não atribuído'}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Data/Hora</label>
-                  <p className="font-medium">{formatDate(selectedOrder.scheduled_date)} às {formatTime(selectedOrder.scheduled_time)}</p>
+                  <p className="font-medium">
+                    {formatDate(selectedOrder.scheduled_date)} às {formatTime(selectedOrder.scheduled_time)}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Endereço</label>
-                  <p className="font-medium">{selectedOrder.address}</p>
-                  <p className="text-sm text-muted-foreground">{selectedOrder.city}/{selectedOrder.state}</p>
+                  <p className="font-medium">{selectedOrder.address || ''}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedOrder.city || ''}/{selectedOrder.state || ''}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Pragas-alvo</label>
                   <div className="flex gap-1 mt-1">
-                    {selectedOrder.target_pests.map((pest) => (
+                    {selectedOrder.target_pests?.map((pest: string) => (
                       <Badge key={pest} variant="outline">{pest}</Badge>
-                    ))}
+                    )) || []}
                   </div>
                 </div>
               </div>
               <div className="border-t pt-4">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Valor</span>
-                  <span className="text-xl font-bold">{formatCurrency(selectedOrder.value)}</span>
+                  <span className="text-xl font-bold">{formatCurrency(selectedOrder.value || 0)}</span>
                 </div>
               </div>
             </div>

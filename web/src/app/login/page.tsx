@@ -2,104 +2,113 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Cpu, Scissors, Loader2, Sparkles, ChevronRight, Users } from "lucide-react";
-
-const Input = ({ ...props }: any) => (
-  <input
-    {...props}
-    className="w-full bg-white/5 border border-white/10 rounded-2xl h-12 px-4 focus:border-primary/50 outline-none transition-all placeholder:text-white/20 text-white"
-  />
-);
-
-const Button = ({ children, loading, ...props }: any) => (
-  <button
-    {...props}
-    className="w-full h-14 rounded-2xl text-lg font-bold bg-primary hover:bg-primary-dark shadow-glow transition-all text-white flex items-center justify-center disabled:opacity-50"
-  >
-    {loading ? <Loader2 className="animate-spin h-6 w-6" /> : children}
-  </button>
-);
+import { Bug, Loader2, Users, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setTimeout(() => {
       router.push("/dashboard");
-    }, 1500);
+    }, 1000);
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden text-foreground">
-      {/* Background Textures */}
-      <div className="fixed inset-0 bg-premium-gradient -z-20" />
-      <div className="fixed inset-0 bg-vertical-lines -z-10" />
-      <div className="fixed inset-0 bg-grid-pattern opacity-10 -z-10" />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-background to-primary/5 relative overflow-hidden">
+      <div className="absolute inset-0 bg-grid-pattern opacity-40" />
+      <div className="absolute top-20 left-20 w-72 h-72 bg-primary/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-20 right-20 w-96 h-96 bg-secondary/10 rounded-full blur-3xl" />
       
-      {/* Glow Orbs */}
-      <div className="glow-orb w-[400px] h-[400px] bg-primary/20 top-[10%] left-[-100px]" />
-      <div className="glow-orb w-[400px] h-[400px] bg-cyan-600/10 bottom-[10%] right-[-100px]" />
-
-      <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-10 group">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary mb-6 shadow-glow animate-float group-hover:scale-110 transition-transform">
-            <Cpu className="h-10 w-10 text-white" />
+      <div className="w-full max-w-md relative">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary/80 mb-5 shadow-glow">
+            <Bug className="h-8 w-8 text-white" />
           </div>
-          <h1 className="text-4xl font-extrabold text-white text-glow mb-2">GPRAGAS<span className="text-primary italic">.ai</span></h1>
-          <p className="text-muted-foreground font-medium italic">Elite Pest Control Management</p>
+          <h1 className="text-3xl font-bold text-foreground">GPRAGAS</h1>
+          <p className="text-sm text-muted-foreground mt-1">Sistema de Gestão de Pragas</p>
         </div>
 
-        <div className="glass-card rounded-[2.5rem] p-8 border-white/10 shadow-2xl relative overflow-hidden">
-          {/* Inner Glow Decorative */}
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
-          
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold mb-1 text-white">Bem-vindo</h2>
-            <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-              Entre para gerenciar sua operação <Sparkles className="h-3.5 w-3.5 text-primary" />
+        <div className="bg-white/80 backdrop-blur-sm border border-border/50 rounded-2xl p-8 shadow-card">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold text-foreground">Bem-vindo</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              Entre com suas credenciais
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <label className="text-sm font-semibold ml-1 text-white/80">E-mail Corporativo</label>
-              <Input type="email" placeholder="nome@suaempresa.com" required />
+              <label className="text-sm font-medium text-foreground">E-mail</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="nome@empresa.com"
+                className="w-full bg-muted border-0 rounded-xl h-12 px-4 focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground placeholder:text-muted-foreground"
+                required
+              />
             </div>
 
             <div className="space-y-2">
-              <div className="flex justify-between items-center ml-1">
-                <label className="text-sm font-semibold text-white/80">Senha</label>
-                <a href="#" className="text-[11px] text-primary/80 hover:text-primary transition-colors font-bold uppercase tracking-wider">Esqueceu?</a>
+              <div className="flex justify-between items-center">
+                <label className="text-sm font-medium text-foreground">Senha</label>
+                <a href="#" className="text-xs text-primary hover:underline font-medium">Esqueceu a senha?</a>
               </div>
-              <Input type="password" placeholder="••••••••" required />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full bg-muted border-0 rounded-xl h-12 px-4 pr-12 focus:ring-2 focus:ring-primary/20 outline-none transition-all text-foreground placeholder:text-muted-foreground"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                </button>
+              </div>
             </div>
 
-            <Button type="submit" loading={loading}>
-              Acessar Sistema
-            </Button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 rounded-xl text-base font-semibold bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary/80 transition-all text-white flex items-center justify-center shadow-glow hover:shadow-lg disabled:opacity-50"
+            >
+              {loading ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                "Entrar"
+              )}
+            </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-white/5 text-center space-y-4">
-            <div className="text-xs">
-              <span className="text-muted-foreground">Nova Empresa? </span>
-              <a href="#" className="text-primary hover:text-primary-light transition-colors font-bold group">
-                Contratar Plano Pro
-                <ChevronRight className="inline-block h-3 w-3 ml-0.5 group-hover:translate-x-0.5 transition-transform" />
+          <div className="mt-6 pt-6 border-t border-border text-center space-y-4">
+            <div className="text-sm">
+              <span className="text-muted-foreground">Nova empresa? </span>
+              <a href="#" className="text-primary hover:underline font-medium">
+                Criar conta
               </a>
             </div>
             
-            <a href="#" className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 transition-all group">
-              <Users className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
-              <span className="text-xs font-bold text-white/90">Acesso Colaborador</span>
+            <a href="#" className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-muted hover:bg-muted/80 border border-border/50 transition-all">
+              <Users className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-foreground">Acesso Colaborador</span>
             </a>
           </div>
         </div>
         
-        <p className="text-center mt-10 text-[10px] text-white/20 uppercase tracking-[0.2em] font-bold">
-          Powered by GPRAGAS Intelligence
+        <p className="text-center mt-6 text-xs text-muted-foreground font-medium">
+          © 2026 GPRAGAS. Todos os direitos reservados.
         </p>
       </div>
     </div>

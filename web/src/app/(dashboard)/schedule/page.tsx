@@ -13,6 +13,8 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog"
+import Link from "next/link"
+
 import {
   ChevronLeft,
   ChevronRight,
@@ -116,10 +118,12 @@ export default function SchedulePage() {
           <h1 className="text-2xl font-bold">Agenda</h1>
           <p className="text-muted-foreground">Gerencie o cronograma de serviços</p>
         </div>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          Novo Agendamento
-        </Button>
+        <Link href="/work-orders/new">
+          <Button>
+            <Plus className="mr-2 h-4 w-4" />
+            Novo Agendamento
+          </Button>
+        </Link>
       </div>
 
       {/* Controls */}
