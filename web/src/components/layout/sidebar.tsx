@@ -47,13 +47,13 @@ export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
 
   return (
-    <div className={cn("flex h-full flex-col bg-white border-r border-border", className)}>
-      <div className="flex h-16 items-center px-5 border-b border-border">
+    <div className={cn("flex h-full flex-col bg-[#001529] text-white/70", className)}>
+      <div className="flex h-16 items-center px-5 border-b border-white/10">
         <div className="flex items-center gap-2">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center shadow-glow">
+          <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
             <Bug className="h-5 w-5 text-white" />
           </div>
-          <span className="text-lg font-bold text-foreground">GPRAGAS</span>
+          <span className="text-lg font-bold text-white tracking-tight">GPRAGAS</span>
         </div>
       </div>
 
@@ -68,13 +68,13 @@ export function Sidebar({ className }: SidebarProps) {
                   className={cn(
                     "flex items-center rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 group",
                     isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-[#1890ff]/20 text-white"
+                      : "text-white/70 hover:bg-white/5 hover:text-white"
                   )}
                 >
                   <item.icon className={cn(
                     "mr-3 h-5 w-5 transition-colors",
-                    isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground"
+                    isActive ? "text-white" : "text-white/70 group-hover:text-white"
                   )} />
                   {item.name}
                 </Link>
@@ -84,8 +84,8 @@ export function Sidebar({ className }: SidebarProps) {
         </ul>
       </nav>
 
-      <div className="p-4 border-t border-border">
-        <button className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-destructive transition-all">
+      <div className="p-4 border-t border-white/10">
+        <button className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-destructive transition-all">
           <LogOut className="mr-3 h-5 w-5" />
           Sair
         </button>
