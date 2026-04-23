@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -25,66 +25,12 @@ import {
   Calendar,
   QrCode,
   Share2,
+  Loader2,
 } from "lucide-react"
 import { formatDate, getStatusColor, getStatusLabel } from "@/lib/utils"
+import { getReports } from "@/lib/data"
 
-const mockReports = [
-  {
-    id: "L-2026-0001",
-    work_order_id: "OS-003",
-    client: "Casa da Família Silva",
-    service: "Dedetização Completa",
-    report_type: "dedetization",
-    status: "approved",
-    issue_date: "2026-04-15",
-    valid_until: "2026-07-15",
-    qr_code: "QR-001",
-  },
-  {
-    id: "L-2026-0002",
-    work_order_id: "OS-004",
-    client: "Supermercado Bom Preço",
-    service: "MIP - Manejo Integrado",
-    report_type: "mip",
-    status: "pending_approval",
-    issue_date: "2026-04-15",
-    valid_until: null,
-    qr_code: null,
-  },
-  {
-    id: "L-2026-0003",
-    work_order_id: "OS-007",
-    client: "Restaurante Gourmet",
-    service: "Desinsetização",
-    report_type: "certification",
-    status: "sent",
-    issue_date: "2026-04-14",
-    valid_until: "2026-07-14",
-    qr_code: "QR-003",
-  },
-  {
-    id: "L-2026-0004",
-    work_order_id: "OS-008",
-    client: "Escritório Centro",
-    service: "Desratização",
-    report_type: "dedetization",
-    status: "draft",
-    issue_date: "2026-04-14",
-    valid_until: null,
-    qr_code: null,
-  },
-  {
-    id: "L-2026-0005",
-    work_order_id: "OS-009",
-    client: "Farmácia Popular",
-    service: "Sanitização",
-    report_type: "sanitary",
-    status: "expired",
-    issue_date: "2025-04-10",
-    valid_until: "2025-07-10",
-    qr_code: "QR-005",
-  },
-]
+const MOCK_COMPANY_ID = "demo-company"
 
 const getReportTypeLabel = (type: string) => {
   const labels: Record<string, string> = {
@@ -97,26 +43,43 @@ const getReportTypeLabel = (type: string) => {
 }
 
 export default function ReportsPage() {
+  const [reports, setReports] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
-  const [selectedReport, setSelectedReport] = useState<typeof mockReports[0] | null>(null)
+  const [selectedReport, setSelectedReport] = useState<any | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const filteredReports = mockReports.filter((report) => {
+  useEffect(() => {
+    async function loadReports() {
+      try {
+        const data = await getReports(MOCK_COMPANY_ID)
+        setReports(data || [])
+      } catch (error) {
+        console.error("Erro ao carregar laudos:", error)
+        setReports([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadReports()
+  }, [])
+
+  const filteredReports = reports.filter((report) => {
     const matchesSearch =
-      report.id.toLowerCase().includes(search.toLowerCase()) ||
-      report.client.toLowerCase().includes(search.toLowerCase())
+      report.id?.toLowerCase().includes(search.toLowerCase()) ||
+      report.client?.name?.toLowerCase().includes(search.toLowerCase())
     return matchesSearch
   })
 
   const statusCounts = {
-    draft: mockReports.filter((r) => r.status === "draft").length,
-    pending_approval: mockReports.filter((r) => r.status === "pending_approval").length,
-    approved: mockReports.filter((r) => r.status === "approved").length,
-    sent: mockReports.filter((r) => r.status === "sent").length,
-    expired: mockReports.filter((r) => r.status === "expired").length,
+    draft: reports.filter((r) => r.status === "draft").length,
+    pending_approval: reports.filter((r) => r.status === "pending_approval").length,
+    approved: reports.filter((r) => r.status === "approved").length,
+    sent: reports.filter((r) => r.status === "sent").length,
+    expired: reports.filter((r) => r.status === "expired").length,
   }
 
-  const handleViewReport = (report: typeof mockReports[0]) => {
+  const handleViewReport = (report: any) => {
     setSelectedReport(report)
     setIsModalOpen(true)
   }
@@ -211,75 +174,89 @@ export default function ReportsPage() {
       {/* Reports List */}
       <Card className="shadow-card">
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-surface-elevated border-b">
-                <tr>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Laudo</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">OS</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Cliente</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Tipo</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Data</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Validade</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Status</th>
-                  <th className="text-left p-4 font-medium text-muted-foreground text-sm">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredReports.map((report) => (
-                  <tr key={report.id} className="border-b hover:bg-surface-elevated transition-colors">
-                    <td className="p-4">
-                      <span className="font-mono font-medium">{report.id}</span>
-                    </td>
-                    <td className="p-4">
-                      <span className="font-mono text-sm">{report.work_order_id}</span>
-                    </td>
-                    <td className="p-4">
-                      <div>
-                        <p className="font-medium">{report.client}</p>
-                        <p className="text-xs text-muted-foreground">{report.service}</p>
-                      </div>
-                    </td>
-                    <td className="p-4">
-                      <Badge variant="outline">{getReportTypeLabel(report.report_type)}</Badge>
-                    </td>
-                    <td className="p-4">
-                      <span className="text-sm">{formatDate(report.issue_date)}</span>
-                    </td>
-                    <td className="p-4">
-                      {report.valid_until ? (
-                        <span className="text-sm">{formatDate(report.valid_until)}</span>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">-</span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <Badge className={getStatusColor(report.status)}>
-                        {getStatusLabel(report.status)}
-                      </Badge>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleViewReport(report)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {report.status === "approved" && (
-                          <>
-                            <Button variant="ghost" size="icon">
-                              <Download className="h-4 w-4" />
-                            </Button>
-                            <Button variant="ghost" size="icon">
-                              <Share2 className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </td>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : filteredReports.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <FileText className="h-12 w-12 mb-2 opacity-50" />
+              <p>Nenhum laudo encontrado</p>
+              <Button variant="link" className="mt-2">
+                Gerar primeiro laudo
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-surface-elevated border-b">
+                  <tr>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Laudo</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">OS</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Cliente</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Tipo</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Data</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Validade</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Status</th>
+                    <th className="text-left p-4 font-medium text-muted-foreground text-sm">Ações</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {filteredReports.map((report) => (
+                    <tr key={report.id} className="border-b hover:bg-surface-elevated transition-colors">
+                      <td className="p-4">
+                        <span className="font-mono font-medium">{report.id}</span>
+                      </td>
+                      <td className="p-4">
+                        <span className="font-mono text-sm">{report.work_order_id}</span>
+                      </td>
+                      <td className="p-4">
+                        <div>
+                          <p className="font-medium">{report.client?.name || "—"}</p>
+                          <p className="text-xs text-muted-foreground">{report.service_type?.name || "—"}</p>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <Badge variant="outline">{getReportTypeLabel(report.report_type)}</Badge>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-sm">{formatDate(report.created_at)}</span>
+                      </td>
+                      <td className="p-4">
+                        {report.valid_until ? (
+                          <span className="text-sm">{formatDate(report.valid_until)}</span>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">-</span>
+                        )}
+                      </td>
+                      <td className="p-4">
+                        <Badge className={getStatusColor(report.status)}>
+                          {getStatusLabel(report.status)}
+                        </Badge>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => handleViewReport(report)}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {report.status === "approved" && (
+                            <>
+                              <Button variant="ghost" size="icon">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="icon">
+                                <Share2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </CardContent>
       </Card>
 

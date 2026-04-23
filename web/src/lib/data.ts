@@ -1,25 +1,29 @@
-import { supabase } from "./supabase"
+const MOCK_CLIENTS: any[] = []
+
+const MOCK_WORK_ORDERS: any[] = []
+
+const MOCK_TECHNICIANS: any[] = []
+
+const MOCK_PRODUCTS: any[] = []
+
+const MOCK_CONTRACTS: any[] = []
+
+const MOCK_VEHICLES: any[] = []
+
+const MOCK_QUOTES: any[] = []
+
+const MOCK_INVOICES: any[] = []
+
+const MOCK_REPORTS: any[] = []
+
+const MOCK_COMMUNICATIONS: any[] = []
 
 export async function getClients(companyId: string) {
-  const { data, error } = await supabase
-    .from("clients")
-    .select("*")
-    .eq("company_id", companyId)
-    .order("name")
-
-  if (error) throw error
-  return data
+  return MOCK_CLIENTS
 }
 
 export async function getClientById(id: string) {
-  const { data, error } = await supabase
-    .from("clients")
-    .select("*")
-    .eq("id", id)
-    .single()
-
-  if (error) throw error
-  return data
+  return MOCK_CLIENTS.find(c => c.id === id) || null
 }
 
 export async function getWorkOrders(companyId: string, filters?: {
@@ -28,118 +32,74 @@ export async function getWorkOrders(companyId: string, filters?: {
   dateFrom?: string
   dateTo?: string
 }) {
-  let query = supabase
-    .from("work_orders")
-    .select(`
-      *,
-      client:clients(name, document),
-      technician:technicians(user_id, name)
-    `)
-    .eq("company_id", companyId)
-    .order("scheduled_date", { ascending: false })
-
+  let data = MOCK_WORK_ORDERS
   if (filters?.status) {
-    query = query.eq("status", filters.status)
+    data = data.filter(o => o.status === filters.status)
   }
-  if (filters?.technicianId) {
-    query = query.eq("technician_id", filters.technicianId)
-  }
-  if (filters?.dateFrom) {
-    query = query.gte("scheduled_date", filters.dateFrom)
-  }
-  if (filters?.dateTo) {
-    query = query.lte("scheduled_date", filters.dateTo)
-  }
-
-  const { data, error } = await query
-
-  if (error) throw error
   return data
 }
 
 export async function getWorkOrderById(id: string) {
-  const { data, error } = await supabase
-    .from("work_orders")
-    .select(`
-      *,
-      client:clients(*),
-      technician:technicians(*),
-      service_type:services(*)
-    `)
-    .eq("id", id)
-    .single()
-
-  if (error) throw error
-  return data
+  return MOCK_WORK_ORDERS.find(o => o.id === id) || null
 }
 
 export async function getTechnicians(companyId: string) {
-  const { data, error } = await supabase
-    .from("technicians")
-    .select(`
-      *,
-      user:users(full_name)
-    `)
-    .eq("company_id", companyId)
-    .eq("active", true)
-    .order("name")
-
-  if (error) throw error
-  return data
+  return MOCK_TECHNICIANS
 }
 
 export async function getDashboardStats(companyId: string) {
-  const now = new Date()
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split("T")[0]
-  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split("T")[0]
-
-  const [clientsCount, workOrdersCount, completedCount, revenueResult] = await Promise.all([
-    supabase.from("clients").select("*", { count: "exact", head: true }).eq("company_id", companyId),
-    supabase.from("work_orders").select("*", { count: "exact", head: true }).eq("company_id", companyId).gte("scheduled_date", firstDayOfMonth).lte("scheduled_date", lastDayOfMonth),
-    supabase.from("work_orders").select("*", { count: "exact", head: true }).eq("company_id", companyId).eq("status", "completed").gte("scheduled_date", firstDayOfMonth).lte("scheduled_date", lastDayOfMonth),
-    supabase.from("work_orders").select("value").eq("company_id", companyId).eq("status", "completed").gte("scheduled_date", firstDayOfMonth).lte("scheduled_date", lastDayOfMonth)
-  ])
-
-  const monthlyRevenue = revenueResult.data?.reduce((sum, wo) => sum + (wo.value || 0), 0) || 0
-
   return {
-    totalClients: clientsCount.count || 0,
-    totalWorkOrders: workOrdersCount.count || 0,
-    completedWorkOrders: completedCount.count || 0,
-    monthlyRevenue
+    totalClients: MOCK_CLIENTS.length,
+    totalWorkOrders: MOCK_WORK_ORDERS.length,
+    completedWorkOrders: MOCK_WORK_ORDERS.filter(o => o.status === "completed").length,
+    monthlyRevenue: MOCK_WORK_ORDERS.reduce((sum, wo) => sum + (wo.value || 0), 0),
+    totalTechnicians: MOCK_TECHNICIANS.length,
+    activeTechnicians: MOCK_TECHNICIANS.filter(t => t.status === "active").length,
+    totalVehicles: MOCK_VEHICLES.length,
+    activeVehicles: MOCK_VEHICLES.filter(v => v.status === "active").length,
   }
 }
 
 export async function getSchedule(companyId: string, date: string) {
-  const { data, error } = await supabase
-    .from("work_orders")
-    .select(`
-      *,
-      client:clients(name),
-      technician:technicians(name)
-    `)
-    .eq("company_id", companyId)
-    .eq("scheduled_date", date)
-    .order("scheduled_time")
-
-  if (error) throw error
-  return data
+  return MOCK_WORK_ORDERS.filter(o => o.scheduled_date === date)
 }
 
 export async function getReports(companyId: string) {
-  const { data, error } = await supabase
-    .from("reports")
-    .select(`
-      *,
-      work_order:work_orders(
-        id,
-        client:clients(name),
-        service_type:services(name)
-      )
-    `)
-    .eq("company_id", companyId)
-    .order("created_at", { ascending: false })
+  return MOCK_REPORTS
+}
 
-  if (error) throw error
-  return data
+export async function getProducts(companyId: string) {
+  return MOCK_PRODUCTS
+}
+
+export async function getProductById(id: string) {
+  return MOCK_PRODUCTS.find(p => p.id === id) || null
+}
+
+export async function getContracts(companyId: string) {
+  return MOCK_CONTRACTS
+}
+
+export async function getContractById(id: string) {
+  return MOCK_CONTRACTS.find(c => c.id === id) || null
+}
+
+export async function getInvoices(companyId: string) {
+  return MOCK_INVOICES
+}
+
+export async function getInvoiceById(id: string) {
+  return MOCK_INVOICES.find(i => i.id === id) || null
+}
+
+export async function getVehicles(companyId: string) {
+  return MOCK_VEHICLES
+}
+
+export async function getQuotes(companyId: string) {
+  return MOCK_QUOTES
+}
+
+export async function getCommunications(companyId: string) {
+  return MOCK_COMMUNICATIONS
 }
