@@ -53,7 +53,7 @@ export function Sidebar({ className }: SidebarProps) {
           <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center">
             <Bug className="h-5 w-5 text-white" />
           </div>
-          <span className="text-lg font-bold text-white tracking-tight">GPRAGAS</span>
+          <span className="text-lg font-bold text-white tracking-tight">SmartPrag</span>
         </div>
       </div>
 

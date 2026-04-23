@@ -77,7 +77,7 @@ export default function DashboardPage() {
     <div className="space-y-8 animate-fade-in pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-[#1e293b]">Dashboard</h1>
+          <h1 className="text-3xl font-bold text-[#1e293b]">SmartPrag Dashboard</h1>
           <p className="text-[#64748b] text-lg">Visão geral das operações</p>
         </div>
         <Link href="/work-orders/new">

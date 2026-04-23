@@ -23,7 +23,7 @@ interface HeaderProps {
 }
 
 export function Header({
-  companyName = "Demo Pest Control",
+  companyName = "SmartPrag",
   userName = "Admin Demo",
   userRole = "Administrador",
   className,

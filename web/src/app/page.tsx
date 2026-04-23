@@ -34,7 +34,7 @@ export default function LandingPage() {
           <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-glow">
             <Cpu className="text-white h-6 w-6" />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-glow">GPRAGAS<span className="text-primary italic">.ai</span></span>
+          <span className="text-2xl font-bold tracking-tight text-glow">SmartPrag<span className="text-primary italic">.ai</span></span>
         </div>
         
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-muted-foreground">
@@ -137,7 +137,7 @@ export default function LandingPage() {
                 Resultados <span className="text-primary italic">Comprovados</span> No Campo
               </h2>
               <p className="text-muted-foreground mb-8 text-lg italic">
-                Aumente a eficiência operacional em até 35% e reduza o uso de papel em 100% com a GPRAGAS.
+                Aumente a eficiência operacional em até 35% e reduza o uso de papel em 100% com a SmartPrag.
               </p>
               <div className="flex items-center gap-8">
                 <div>
@@ -159,10 +159,10 @@ export default function LandingPage() {
         <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-2">
             <Cpu className="text-primary h-6 w-6" />
-            <span className="text-xl font-bold tracking-tight">GPRAGAS<span className="text-primary italic">.ai</span></span>
+            <span className="text-xl font-bold tracking-tight">SmartPrag<span className="text-primary italic">.ai</span></span>
           </div>
           <div className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold text-center">
-            © 2026 GPRAGAS INTELLIGENT SYSTEMS. TODOS OS DIREITOS RESERVADOS.
+            © 2026 SmartPrag INTELLIGENT SYSTEMS. TODOS OS DIREITOS RESERVADOS.
           </div>
         </div>
       </footer>
