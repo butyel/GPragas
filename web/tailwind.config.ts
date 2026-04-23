@@ -43,13 +43,13 @@ const config: Config = {
           light: '#FCD34D',
           dark: '#D97706',
         },
-        background: '#F8FAFC',
+        background: '#020617',
         surface: {
-          DEFAULT: '#FFFFFF',
-          elevated: '#F1F5F9',
-          background: '#F8FAFC',
+          DEFAULT: '#0F172A',
+          elevated: '#1E293B',
+          background: '#020617',
         },
-        foreground: '#1E293B',
+        foreground: '#F8FAFC',
         muted: {
           DEFAULT: '#F1F5F9',
           foreground: '#64748B',
