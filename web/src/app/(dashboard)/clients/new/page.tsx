@@ -15,6 +15,7 @@ import {
   Building2,
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/hooks/useAuth"
 
 const segmentOptions = [
   { value: "residential", label: "Residencial" },
@@ -70,6 +71,7 @@ interface FormData {
 
 export default function NewClientPage() {
   const router = useRouter()
+  const { companyId } = useAuth()
   const [saving, setSaving] = useState(false)
   const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({})
   const [form, setForm] = useState<FormData>({
@@ -106,14 +108,17 @@ export default function NewClientPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const MOCK_COMPANY_ID = "11111111-1111-1111-1111-111111111111"
-
   const handleSave = async () => {
     if (!validate()) return
+    if (!companyId) {
+      alert("Sessão expirada. Faça login novamente.")
+      router.push("/login")
+      return
+    }
     setSaving(true)
     try {
       const { error } = await supabase.from("clients").insert({
-        company_id: MOCK_COMPANY_ID,
+        company_id: companyId,
         type: form.type,
         name: form.name.trim(),
         document: form.document.trim(),

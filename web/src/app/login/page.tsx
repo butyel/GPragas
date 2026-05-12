@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Bug, Loader2, Users, Eye, EyeOff } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,13 +11,30 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMsg("");
     setLoading(true);
-    setTimeout(() => {
+
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        setErrorMsg("E-mail ou senha incorretos. Tente novamente.");
+        return;
+      }
+
       router.push("/dashboard");
-    }, 1000);
+    } catch {
+      setErrorMsg("Erro ao conectar. Verifique sua conexão e tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -41,6 +59,12 @@ export default function LoginPage() {
               Entre com suas credenciais
             </p>
           </div>
+
+          {errorMsg && (
+            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
+              {errorMsg}
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
