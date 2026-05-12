@@ -106,7 +106,7 @@ export default function NewClientPage() {
     return Object.keys(newErrors).length === 0
   }
 
-  const MOCK_COMPANY_ID = "demo-company"
+  const MOCK_COMPANY_ID = "11111111-1111-1111-1111-111111111111"
 
   const handleSave = async () => {
     if (!validate()) return

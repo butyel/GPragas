@@ -5,7 +5,7 @@
 -- ============================================
 -- COMPANIES (Multi-tenant)
 -- ============================================
-CREATE TABLE companies (
+CREATE TABLE IF NOT EXISTS companies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     slug TEXT UNIQUE NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE companies (
 -- ============================================
 -- USERS (Authentication)
 -- ============================================
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE users (
 -- ============================================
 -- CLIENTS (CRM)
 -- ============================================
-CREATE TABLE clients (
+CREATE TABLE IF NOT EXISTS clients (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     type TEXT NOT NULL CHECK (type IN ('pf', 'pj')),
@@ -78,7 +78,7 @@ CREATE TABLE clients (
 -- ============================================
 -- PRODUCTS (Catalog)
 -- ============================================
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
@@ -100,7 +100,7 @@ CREATE TABLE products (
 -- ============================================
 -- SERVICE TYPES
 -- ============================================
-CREATE TABLE service_types (
+CREATE TABLE IF NOT EXISTS service_types (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     name TEXT NOT NULL, -- Desinsetização, Desratização, etc
@@ -115,7 +115,7 @@ CREATE TABLE service_types (
 -- ============================================
 -- TECHNICIANS
 -- ============================================
-CREATE TABLE technicians (
+CREATE TABLE IF NOT EXISTS technicians (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
@@ -134,7 +134,7 @@ CREATE TABLE technicians (
 -- ============================================
 -- WORK ORDERS (OS)
 -- ============================================
-CREATE TABLE work_orders (
+CREATE TABLE IF NOT EXISTS work_orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     client_id UUID REFERENCES clients(id) ON DELETE SET NULL,
@@ -199,7 +199,7 @@ CREATE TABLE work_orders (
 -- ============================================
 -- WORK ORDER ITEMS (Products used)
 -- ============================================
-CREATE TABLE work_order_items (
+CREATE TABLE IF NOT EXISTS work_order_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     work_order_id UUID REFERENCES work_orders(id) ON DELETE CASCADE,
     product_id UUID REFERENCES products(id),
@@ -212,7 +212,7 @@ CREATE TABLE work_order_items (
 -- ============================================
 -- WORK ORDER PHOTOS
 -- ============================================
-CREATE TABLE work_order_photos (
+CREATE TABLE IF NOT EXISTS work_order_photos (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     work_order_id UUID REFERENCES work_orders(id) ON DELETE CASCADE,
     type TEXT CHECK (type IN ('before', 'after', 'during', 'evidence')),
@@ -226,7 +226,7 @@ CREATE TABLE work_order_photos (
 -- ============================================
 -- SCHEDULES (Calendar)
 -- ============================================
-CREATE TABLE schedules (
+CREATE TABLE IF NOT EXISTS schedules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     work_order_id UUID REFERENCES work_orders(id) ON DELETE CASCADE,
@@ -248,7 +248,7 @@ CREATE TABLE schedules (
 -- ============================================
 -- REPORTS (Laudos Técnicos)
 -- ============================================
-CREATE TABLE reports (
+CREATE TABLE IF NOT EXISTS reports (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     work_order_id UUID REFERENCES work_orders(id) ON DELETE SET NULL,
@@ -282,7 +282,7 @@ CREATE TABLE reports (
 -- ============================================
 -- CONTRACTS (Recurring Services)
 -- ============================================
-CREATE TABLE contracts (
+CREATE TABLE IF NOT EXISTS contracts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     client_id UUID REFERENCES clients(id),
@@ -316,7 +316,7 @@ CREATE TABLE contracts (
 -- ============================================
 -- FINANCIAL (Future - Phase 2)
 -- ============================================
-CREATE TABLE invoices (
+CREATE TABLE IF NOT EXISTS invoices (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     contract_id UUID REFERENCES contracts(id),
@@ -349,7 +349,7 @@ CREATE TABLE invoices (
 -- ============================================
 -- COMMUNICATIONS (WhatsApp, Email logs)
 -- ============================================
-CREATE TABLE communications (
+CREATE TABLE IF NOT EXISTS communications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     client_id UUID REFERENCES clients(id),
@@ -374,7 +374,7 @@ CREATE TABLE communications (
 -- ============================================
 -- AUDIT LOGS (All critical actions)
 -- ============================================
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     user_id UUID REFERENCES users(id),
@@ -394,16 +394,16 @@ CREATE TABLE audit_logs (
 -- ============================================
 -- INDEXES FOR PERFORMANCE
 -- ============================================
-CREATE INDEX idx_clients_company ON clients(company_id);
-CREATE INDEX idx_work_orders_company ON work_orders(company_id);
-CREATE INDEX idx_work_orders_technician ON work_orders(technician_id);
-CREATE INDEX idx_work_orders_status ON work_orders(status);
-CREATE INDEX idx_work_orders_scheduled_date ON work_orders(scheduled_date);
-CREATE INDEX idx_schedules_technician_date ON schedules(technician_id, start_date);
-CREATE INDEX idx_reports_company ON reports(company_id);
-CREATE INDEX idx_invoices_company ON invoices(company_id);
-CREATE INDEX idx_audit_logs_company ON audit_logs(company_id);
-CREATE INDEX idx_audit_logs_created ON audit_logs(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_clients_company ON clients(company_id);
+CREATE INDEX IF NOT EXISTS idx_work_orders_company ON work_orders(company_id);
+CREATE INDEX IF NOT EXISTS idx_work_orders_technician ON work_orders(technician_id);
+CREATE INDEX IF NOT EXISTS idx_work_orders_status ON work_orders(status);
+CREATE INDEX IF NOT EXISTS idx_work_orders_scheduled_date ON work_orders(scheduled_date);
+CREATE INDEX IF NOT EXISTS idx_schedules_technician_date ON schedules(technician_id, start_date);
+CREATE INDEX IF NOT EXISTS idx_reports_company ON reports(company_id);
+CREATE INDEX IF NOT EXISTS idx_invoices_company ON invoices(company_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_company ON audit_logs(company_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_created ON audit_logs(created_at DESC);
 
 -- ============================================
 -- ROW LEVEL SECURITY (RLS) - Multi-tenant
@@ -427,52 +427,63 @@ ALTER TABLE communications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 
 -- Helper function to get current company_id
-CREATE OR REPLACE FUNCTION auth.company_id()
+CREATE OR REPLACE FUNCTION company_id()
 RETURNS UUID AS $$
     SELECT nullif(current_setting('app.current_company_id', true), '')::UUID;
 $$ LANGUAGE SQL STABLE;
 
 -- Companies: everyone can read, only super admin can modify
+DROP POLICY IF EXISTS "Companies are viewable by everyone" ON companies;
 CREATE POLICY "Companies are viewable by everyone" ON companies
     FOR SELECT USING (true);
 
 -- Users: only own company data
+DROP POLICY IF EXISTS "Users can see own company" ON users;
 CREATE POLICY "Users can see own company" ON users
-    FOR SELECT USING (company_id = auth.company_id());
+    FOR SELECT USING (company_id = company_id());
 
+DROP POLICY IF EXISTS "Users can insert own company" ON users;
 CREATE POLICY "Users can insert own company" ON users
-    FOR INSERT WITH CHECK (company_id = auth.company_id());
+    FOR INSERT WITH CHECK (company_id = company_id());
 
+DROP POLICY IF EXISTS "Users can update own company" ON users;
 CREATE POLICY "Users can update own company" ON users
-    FOR UPDATE USING (company_id = auth.company_id());
+    FOR UPDATE USING (company_id = company_id());
 
 -- Clients
+DROP POLICY IF EXISTS "Clients visible to company" ON clients;
 CREATE POLICY "Clients visible to company" ON clients
-    FOR ALL USING (company_id = auth.company_id());
+    FOR ALL USING (company_id = company_id());
 
 -- Work Orders
+DROP POLICY IF EXISTS "Work orders visible to company" ON work_orders;
 CREATE POLICY "Work orders visible to company" ON work_orders
-    FOR ALL USING (company_id = auth.company_id());
+    FOR ALL USING (company_id = company_id());
 
 -- Schedules
+DROP POLICY IF EXISTS "Schedules visible to company" ON schedules;
 CREATE POLICY "Schedules visible to company" ON schedules
-    FOR ALL USING (company_id = auth.company_id());
+    FOR ALL USING (company_id = company_id());
 
 -- Reports
+DROP POLICY IF EXISTS "Reports visible to company" ON reports;
 CREATE POLICY "Reports visible to company" ON reports
-    FOR ALL USING (company_id = auth.company_id());
+    FOR ALL USING (company_id = company_id());
 
 -- Products
+DROP POLICY IF EXISTS "Products visible to company" ON products;
 CREATE POLICY "Products visible to company" ON products
-    FOR ALL USING (company_id = auth.company_id());
+    FOR ALL USING (company_id = company_id());
 
 -- Technicians
+DROP POLICY IF EXISTS "Technicians visible to company" ON technicians;
 CREATE POLICY "Technicians visible to company" ON technicians
-    FOR ALL USING (company_id = auth.company_id());
+    FOR ALL USING (company_id = company_id());
 
 -- Service Types
+DROP POLICY IF EXISTS "Service types visible to company" ON service_types;
 CREATE POLICY "Service types visible to company" ON service_types
-    FOR ALL USING (company_id = auth.company_id());
+    FOR ALL USING (company_id = company_id());
 
 -- ============================================
 -- STORAGE BUCKETS
@@ -486,22 +497,25 @@ INSERT INTO storage.buckets (id, name, public) VALUES
 -- ============================================
 -- STORAGE POLICIES
 -- ============================================
+DROP POLICY IF EXISTS "Photos accessible to company" ON storage.objects;
 CREATE POLICY "Photos accessible to company" ON storage.objects
     FOR ALL USING (
         bucket_id = 'photos' 
-        AND (storage.foldername(name))[1] = COALESCE(auth.company_id()::text, '')
+        AND (storage.foldername(name))[1] = COALESCE(company_id()::text, '')
     );
 
+DROP POLICY IF EXISTS "Reports accessible to company" ON storage.objects;
 CREATE POLICY "Reports accessible to company" ON storage.objects
     FOR ALL USING (
         bucket_id = 'reports' 
-        AND (storage.foldername(name))[1] = COALESCE(auth.company_id()::text, '')
+        AND (storage.foldername(name))[1] = COALESCE(company_id()::text, '')
     );
 
+DROP POLICY IF EXISTS "Signatures accessible to company" ON storage.objects;
 CREATE POLICY "Signatures accessible to company" ON storage.objects
     FOR ALL USING (
         bucket_id = 'signatures' 
-        AND (storage.foldername(name))[1] = COALESCE(auth.company_id()::text, '')
+        AND (storage.foldername(name))[1] = COALESCE(company_id()::text, '')
     );
 
 -- ============================================
@@ -515,15 +529,19 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_companies_updated_at ON companies;
 CREATE TRIGGER update_companies_updated_at BEFORE UPDATE ON companies
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+DROP TRIGGER IF EXISTS update_users_updated_at ON users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+DROP TRIGGER IF EXISTS update_clients_updated_at ON clients;
 CREATE TRIGGER update_clients_updated_at BEFORE UPDATE ON clients
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+DROP TRIGGER IF EXISTS update_work_orders_updated_at ON work_orders;
 CREATE TRIGGER update_work_orders_updated_at BEFORE UPDATE ON work_orders
     FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
@@ -536,21 +554,21 @@ BEGIN
     IF TG_OP = 'INSERT' THEN
         INSERT INTO audit_logs (company_id, user_id, action, table_name, record_id, new_values)
         VALUES (
-            COALESCE(NEW.company_id, auth.company_id()),
+            COALESCE(NEW.company_id, company_id()),
             nullif(current_setting('app.current_user_id', true), '')::UUID,
             'INSERT', TG_TABLE_NAME, NEW.id, to_jsonb(NEW)
         );
     ELSIF TG_OP = 'UPDATE' THEN
         INSERT INTO audit_logs (company_id, user_id, action, table_name, record_id, old_values, new_values)
         VALUES (
-            COALESCE(NEW.company_id, auth.company_id()),
+            COALESCE(NEW.company_id, company_id()),
             nullif(current_setting('app.current_user_id', true), '')::UUID,
             'UPDATE', TG_TABLE_NAME, NEW.id, to_jsonb(OLD), to_jsonb(NEW)
         );
     ELSIF TG_OP = 'DELETE' THEN
         INSERT INTO audit_logs (company_id, user_id, action, table_name, record_id, old_values)
         VALUES (
-            COALESCE(OLD.company_id, auth.company_id()),
+            COALESCE(OLD.company_id, company_id()),
             nullif(current_setting('app.current_user_id', true), '')::UUID,
             'DELETE', TG_TABLE_NAME, OLD.id, to_jsonb(OLD)
         );
@@ -562,15 +580,15 @@ $$ LANGUAGE plpgsql;
 -- ============================================
 -- SEED DATA (Demo Company)
 -- ============================================
-INSERT INTO companies (name, slug, document, phone, email, license_number, plan)
-VALUES ('Demo Pest Control', 'demo-pest', '12.345.678/0001-90', '(11) 99999-9999', 'contato@demopest.com.br', 'VISA-12345', 'pro')
-RETURNING id;
+INSERT INTO companies (id, name, slug, document, phone, email, license_number, plan)
+VALUES ('11111111-1111-1111-1111-111111111111', 'Demo Pest Control', 'demo-pest', '12.345.678/0001-90', '(11) 99999-9999', 'contato@demopest.com.br', 'VISA-12345', 'pro')
+ON CONFLICT (slug) DO NOTHING;
 
 -- Demo user (password: demo123)
 -- Note: In production, use proper password hashing
 INSERT INTO users (email, password_hash, full_name, role, company_id)
 VALUES ('admin@demopest.com.br', '$2a$10$placeholder', 'Admin Demo', 'admin', (SELECT id FROM companies WHERE slug = 'demo-pest'))
-RETURNING id;
+ON CONFLICT (email) DO NOTHING;
 
 -- Demo service types
 INSERT INTO service_types (company_id, name, description, target_pests, default_duration_minutes, base_price)
@@ -584,5 +602,4 @@ FROM companies WHERE slug = 'demo-pest';
 INSERT INTO service_types (company_id, name, description, target_pests, default_duration_minutes, base_price)
 SELECT id, 'Dedetização Comercial', 'Serviço comercial com garantia', ARRAY['baratas', 'formigas', 'mosquitos', 'ratos'], 120, 250.00
 FROM companies WHERE slug = 'demo-pest';
-
-PRINT 'Database schema created successfully!';
+

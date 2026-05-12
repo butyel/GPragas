@@ -33,7 +33,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { getContracts } from "@/lib/data"
 
-const MOCK_COMPANY_ID = "demo-company"
+const MOCK_COMPANY_ID = "11111111-1111-1111-1111-111111111111"
 
 const getFrequencyLabel = (frequency: string) => {
   const labels: Record<string, string> = {

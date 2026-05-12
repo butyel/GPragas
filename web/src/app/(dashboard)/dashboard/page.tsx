@@ -20,7 +20,7 @@ import { formatCurrency, getStatusColor, getStatusLabel } from "@/lib/utils"
 import { getDashboardStats, getWorkOrders, getSchedule } from "@/lib/data"
 import { useEffect, useState } from "react"
 
-const MOCK_COMPANY_ID = "demo-company"
+const MOCK_COMPANY_ID = "11111111-1111-1111-1111-111111111111"
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<any[]>([])

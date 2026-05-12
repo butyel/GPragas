@@ -35,7 +35,7 @@ import {
 import { formatCurrency, formatDate } from "@/lib/utils"
 import { getInvoices } from "@/lib/data"
 
-const MOCK_COMPANY_ID = "demo-company"
+const MOCK_COMPANY_ID = "11111111-1111-1111-1111-111111111111"
 
 const typeOptions = [
   { value: "", label: "Todos os tipos" },

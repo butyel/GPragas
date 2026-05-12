@@ -30,7 +30,7 @@ import {
 import { formatCurrency } from "@/lib/utils"
 import { getProducts, getProductById } from "@/lib/data"
 
-const MOCK_COMPANY_ID = "demo-company"
+const MOCK_COMPANY_ID = "11111111-1111-1111-1111-111111111111"
 
 const categoryOptions = [
   { value: "", label: "Todas as categorias" },

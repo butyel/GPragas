@@ -71,7 +71,7 @@ export default function ExecuteWorkOrderPage() {
       try {
         const [wo, prod] = await Promise.all([
           getWorkOrderById(orderId),
-          getProducts("demo-company")
+          getProducts("11111111-1111-1111-1111-111111111111")
         ])
         setOrder(wo)
         setProducts(prod || [])

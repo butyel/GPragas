@@ -32,7 +32,7 @@ import {
 import { getClients, getClientById } from "@/lib/data"
 import { formatCurrency } from "@/lib/utils"
 
-const MOCK_COMPANY_ID = "demo-company"
+const MOCK_COMPANY_ID = "11111111-1111-1111-1111-111111111111"
 
 const segmentOptions = [
   { value: "", label: "Todos os segmentos" },

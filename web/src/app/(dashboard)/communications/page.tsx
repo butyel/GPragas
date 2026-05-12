@@ -32,7 +32,7 @@ import {
 import { formatDate, formatTime } from "@/lib/utils"
 import { getCommunications } from "@/lib/data"
 
-const MOCK_COMPANY_ID = "demo-company"
+const MOCK_COMPANY_ID = "11111111-1111-1111-1111-111111111111"
 
 export default function CommunicationsPage() {
   const [messages, setMessages] = useState<any[]>([])

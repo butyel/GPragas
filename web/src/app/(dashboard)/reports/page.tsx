@@ -32,7 +32,7 @@ import {
 import { formatDate, getStatusColor, getStatusLabel } from "@/lib/utils"
 import { getReports } from "@/lib/data"
 
-const MOCK_COMPANY_ID = "demo-company"
+const MOCK_COMPANY_ID = "11111111-1111-1111-1111-111111111111"
 
 const getReportTypeLabel = (type: string) => {
   const labels: Record<string, string> = {

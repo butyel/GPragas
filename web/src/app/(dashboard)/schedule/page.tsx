@@ -30,7 +30,7 @@ import { format, startOfWeek, addDays, addWeeks, subWeeks, isSameDay, isSameMont
 import { ptBR } from "date-fns/locale"
 import { getWorkOrders, getTechnicians } from "@/lib/data"
 
-const MOCK_COMPANY_ID = "demo-company"
+const MOCK_COMPANY_ID = "11111111-1111-1111-1111-111111111111"
 
 const timeSlots = Array.from({ length: 12 }, (_, i) => {
   const hour = i + 8 // Start at 8 AM
