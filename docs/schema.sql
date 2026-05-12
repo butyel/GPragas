@@ -495,7 +495,8 @@ INSERT INTO storage.buckets (id, name, public) VALUES
     ('photos', 'photos', true),
     ('reports', 'reports', true),
     ('signatures', 'signatures', true),
-    ('logos', 'logos', true);
+    ('logos', 'logos', true)
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
 -- STORAGE POLICIES
