@@ -429,8 +429,11 @@ ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
 -- Helper function to get current company_id
 CREATE OR REPLACE FUNCTION company_id()
 RETURNS UUID AS $$
-    SELECT nullif(current_setting('app.current_company_id', true), '')::UUID;
-$$ LANGUAGE SQL STABLE;
+    SELECT COALESCE(
+        (SELECT company_id FROM public.users WHERE id = auth.uid() LIMIT 1),
+        '11111111-1111-1111-1111-111111111111'::UUID
+    );
+$$ LANGUAGE SQL STABLE SECURITY DEFINER;
 
 -- Companies: everyone can read, only super admin can modify
 DROP POLICY IF EXISTS "Companies are viewable by everyone" ON companies;
