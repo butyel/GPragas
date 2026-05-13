@@ -1,8 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/useAuth"
 import {
   LayoutDashboard,
   Users,
@@ -45,6 +46,8 @@ interface SidebarProps {
 
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname()
+  const router = useRouter()
+  const { signOut } = useAuth()
 
   return (
     <div className={cn("flex h-full flex-col bg-[#001529] text-white/70", className)}>
@@ -85,7 +88,7 @@ export function Sidebar({ className }: SidebarProps) {
       </nav>
 
       <div className="p-4 border-t border-white/10">
-        <button className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-destructive transition-all">
+        <button onClick={() => signOut()} className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-white/70 hover:bg-white/5 hover:text-destructive transition-all">
           <LogOut className="mr-3 h-5 w-5" />
           Sair
         </button>

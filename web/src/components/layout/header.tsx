@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
-import { Bell, Search, User, LogOut, ChevronDown, Settings, Menu } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { useRouter } from "next/navigation"
+import { Bell, Search, User, LogOut, ChevronDown, Settings } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
@@ -14,21 +13,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/useAuth"
 
 interface HeaderProps {
   companyName?: string
-  userName?: string
-  userRole?: string
   className?: string
 }
 
 export function Header({
   companyName = "SmartPrag",
-  userName = "Admin Demo",
-  userRole = "Administrador",
   className,
 }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false)
+  const router = useRouter()
+  const { user, signOut } = useAuth()
+
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || "Usuário"
+  const userRole = "Administrador"
 
   return (
     <header
@@ -81,16 +82,16 @@ export function Header({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="rounded-lg py-3">
+            <DropdownMenuItem onClick={() => router.push("/settings/company")} className="rounded-lg py-3">
               <User className="mr-2 h-4 w-4" />
               Perfil
             </DropdownMenuItem>
-            <DropdownMenuItem className="rounded-lg py-3">
+            <DropdownMenuItem onClick={() => router.push("/settings/company")} className="rounded-lg py-3">
               <Settings className="mr-2 h-4 w-4" />
               Configurações
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="rounded-lg py-3 text-destructive focus:text-destructive">
+            <DropdownMenuItem onClick={() => signOut()} className="rounded-lg py-3 text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
               Sair
             </DropdownMenuItem>
