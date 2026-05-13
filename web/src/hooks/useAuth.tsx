@@ -24,12 +24,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const fetchCompanyId = async (userId: string) => {
-    const { data } = await supabase
-      .from("users")
-      .select("company_id")
-      .eq("id", userId)
-      .single()
-    return data?.company_id ?? null
+    try {
+      const { data } = await supabase
+        .from("users")
+        .select("company_id")
+        .eq("id", userId)
+        .single()
+      return data?.company_id ?? null
+    } catch {
+      return null
+    }
   }
 
   useEffect(() => {
@@ -41,23 +45,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setCompanyId(cid)
       }
       setLoading(false)
-    })
+    }).catch(() => setLoading(false))
 
     // Escuta mudanças de sessão (login/logout)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setUser(session?.user ?? null)
-        if (session?.user) {
-          const cid = await fetchCompanyId(session.user.id)
-          setCompanyId(cid)
-        } else {
-          setCompanyId(null)
-        }
-        setLoading(false)
-      }
-    )
+    let subscription: { unsubscribe: () => void } | null = null
 
-    return () => subscription.unsubscribe()
+    try {
+      const { data } = supabase.auth.onAuthStateChange(
+        async (_event, session) => {
+          try {
+            setUser(session?.user ?? null)
+            if (session?.user) {
+              const cid = await fetchCompanyId(session.user.id)
+              setCompanyId(cid)
+            } else {
+              setCompanyId(null)
+            }
+          } catch {
+            // ignora erro na atualização da sessão
+          } finally {
+            setLoading(false)
+          }
+        }
+      )
+      subscription = data.subscription
+    } catch {
+      setLoading(false)
+    }
+
+    return () => {
+      if (subscription) {
+        try { subscription.unsubscribe() } catch {}
+      }
+    }
   }, [])
 
   const signOut = async () => {
