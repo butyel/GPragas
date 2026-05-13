@@ -1,5 +1,4 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
-import { createBrowserClient } from '@supabase/ssr'
 
 let supabaseInstance: SupabaseClient | null = null
 
@@ -10,7 +9,7 @@ export function getSupabase(): SupabaseClient {
     if (!url || !key) {
       throw new Error('Supabase URL e chave anônima são obrigatórios')
     }
-    supabaseInstance = createBrowserClient(url, key)
+    supabaseInstance = createClient(url, key)
   }
   return supabaseInstance
 }
